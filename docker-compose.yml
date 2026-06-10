@@ -1,0 +1,27 @@
+services:
+  storefront:
+    build:
+      context: .
+      args:
+        VENDURE_SHOP_API_URL: http://host.docker.internal:3000/shop-api
+        NEXT_PUBLIC_VENDURE_SHOP_API_URL: http://host.docker.internal:3000/shop-api
+
+    container_name: vendure_storefront
+    restart: unless-stopped
+
+    ports:
+      - "3001:3001"
+
+    environment:
+      NODE_ENV: production
+      VENDURE_SHOP_API_URL: http://host.docker.internal:3000/shop-api
+      NEXT_PUBLIC_VENDURE_SHOP_API_URL: http://host.docker.internal:3000/shop-api
+      VENDURE_CHANNEL_TOKEN: __default_channel__
+      NEXT_PUBLIC_SITE_URL: http://localhost:3001
+      REVALIDATION_SECRET: your-secure-random-string-here
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    env_file:
+      - .env
