@@ -1,7 +1,8 @@
 'use client';
 
-import {use} from 'react';
-import {VerifyResult} from './verify-result';
+import {use, useEffect, useRef, useState} from 'react';
+import {VerifyResult, type VerifyResultValue} from './verify-result';
+import {VerifyLoading} from './verify-loading';
 import {verifyAccountAction} from './actions';
 import {Card, CardContent} from '@/components/ui/card';
 import {Button} from '@/components/ui/button';
@@ -17,6 +18,32 @@ export function VerifyContent({searchParams}: VerifyContentProps) {
     const t = useTranslations('Verify');
     const params = use(searchParams);
     const token = params.token;
+    // Verification tokens are single-use. Cache each request so effect replay
+    // or returning to a previously seen token cannot submit it twice.
+    const requests = useRef(new Map<string, Promise<VerifyResultValue>>());
+    const [settled, setSettled] = useState<{token: string; result: VerifyResultValue}>();
+
+    useEffect(() => {
+        if (!token) return;
+
+        let request = requests.current.get(token);
+        if (!request) {
+            // The action reports its own failures; this rejects only when the
+            // request itself fails to complete.
+            request = verifyAccountAction(token).catch(
+                (): VerifyResultValue => ({error: ''}),
+            );
+            requests.current.set(token, request);
+        }
+
+        let active = true;
+        request.then(result => {
+            if (active) setSettled({token, result});
+        });
+        return () => {
+            active = false;
+        };
+    }, [token]);
 
     if (!token) {
         return (
@@ -48,7 +75,7 @@ export function VerifyContent({searchParams}: VerifyContentProps) {
         );
     }
 
-    const verifyPromise = verifyAccountAction(token);
-
-    return <VerifyResult resultPromise={verifyPromise}/>;
+    return settled?.token === token
+        ? <VerifyResult result={settled.result}/>
+        : <VerifyLoading/>;
 }

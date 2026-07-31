@@ -1,23 +1,21 @@
 'use client';
 
-import {use} from 'react';
 import {Card, CardContent} from '@/components/ui/card';
 import {Button} from '@/components/ui/button';
 import { Link } from '@/platform/i18n/navigation';
 import {CheckCircle, XCircle} from 'lucide-react';
 import {useTranslations} from 'next-intl';
 
-type VerifyResultType = {success: boolean; error?: undefined} | {error: string; success?: undefined};
+export type VerifyResultValue = {success: boolean; error?: undefined} | {error: string; success?: undefined};
 
 interface VerifyResultProps {
-    resultPromise: Promise<VerifyResultType>;
+    result: VerifyResultValue;
 }
 
-export function VerifyResult({resultPromise}: VerifyResultProps) {
+export function VerifyResult({result}: VerifyResultProps) {
     const t = useTranslations('Verify');
-    const result = use(resultPromise);
 
-    const isSuccess = 'success' in result;
+    const isSuccess = result.success === true;
 
     return (
         <Card>
